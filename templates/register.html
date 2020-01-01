@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset = utf-8">
+    <link rel="stylesheet" href="style.css">
+    <title> Реєстрація </title>
+    <style>
+        body {
+            background: url(C:/Фон.png);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 40px;
+        }
+
+        p {
+            margin-top: 5px;
+            text-align: justify;
+        }
+
+        td {
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        img {
+            transition: width 0.5s ease;
+        }
+
+        #main {
+            width: 1000px;
+            margin: 0 auto;
+            font-size: 16px;
+            text-align: left;
+            padding: 30px;
+            background: #90789E;
+            color: #051054;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+        <div class="signup-form">
+            <h1> Реєстрація </h1>
+            <form action="reg" method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="submit">
+            </form>
+            Або <a href="/register">залогіньтеся</a>
+        </div>
+    </div>
+</body>
+
+</html>
