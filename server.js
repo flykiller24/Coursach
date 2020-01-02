@@ -54,7 +54,7 @@ app.post("/auth", function(req, res) {
           req.session.username = username;
           res.redirect("/home");
         } else {
-          res.redirect("/login");
+          res.redirect("/register");
         }
 
         res.end();
@@ -67,7 +67,7 @@ app.post("/auth", function(req, res) {
 });
 
 app.post("/reg", function(req, res) {
-  var username = req.body.username;
+  var username = mysql.escape(req.body.username);
   if (username && req.body.password) {
     var password = bcrypt.hashSync(req.body.password, 10);
 
