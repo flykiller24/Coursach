@@ -6,12 +6,21 @@
 # mysql -u username -p password instruments < setup.sql
 
 CREATE TABLE IF NOT EXISTS `accounts` (
-  `id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
-INSERT INTO `accounts` (`id`, `username`, `password`) VALUES (1, 'test', 'test');
+INSERT INTO `accounts` (`username`, `password`) VALUES ('test', 'test');
 
-ALTER TABLE `accounts` ADD PRIMARY KEY (`id`);
-ALTER TABLE `accounts` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2;
+ALTER TABLE `accounts` ADD PRIMARY KEY (`username`);
+
+CREATE TABLE IF NOT EXISTS `comments` (
+  `id` int(11) NOT NULL,
+  `page` varchar(10) NOT NULL,
+  `comment` varchar (250) NOT NULL,
+  `username` varchar(50) NOT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+ALTER TABLE `comments` ADD PRIMARY KEY (`id`);
+ALTER TABLE `comments` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2;
+ALTER TABLE `comments` ADD FOREIGN KEY (`username`) REFERENCES `accounts`(`username`);

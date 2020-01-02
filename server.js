@@ -53,17 +53,15 @@ app.post("/auth", function(req, res) {
           req.session.loggedin = true;
           req.session.username = username;
           res.redirect("/home");
-        } else if (result.length > 1) {
-          res.render("error505", { layout: "main" });
         } else {
-          res.render("empty", { msg: "Invalid passwod/username" });
+          res.redirect("/login");
         }
 
         res.end();
       }
     );
   } else {
-    res.render("empty", { msg: "Please enter username and password" });
+    res.redirect("/login");
     res.end();
   }
 });
@@ -84,7 +82,7 @@ app.post("/reg", function(req, res) {
     req.session.username = username;
     res.redirect("/home");
   } else {
-    res.render("empty", { msg: "Please enter Username and Password!" });
+    res.redirect('/register');
     res.end();
   }
 });
@@ -110,20 +108,34 @@ app.get("/logout", function(req, res) {
   res.end();
 });
 
+const getComments = (page, cb) => {
 
+  connection.query(
+    `SELECT * FROM comments WHERE page="${page}"`,
+    (err, results) => {
+      if (err) throw err;
+      cb(results);
+    }
+  )
+};
 
-const getComments = (page) => {
-
-  return {};
-}
-
-const putComment = (page, username, txt) => {
-
-}
+const putComment = (page, username, comment, cb) => {
+  comment = mysql.escape(comment);
+  connection.query(
+    `INSERT INTO comments (\`page\`, \`username\`, \`comment\`) VALUES ("${page}", "${username}", "${comment}");`,
+    (err) => {
+      if (err) throw err;
+      console.log(`inserted comment: ${comment} from user ${username}`);
+      cb();
+    }
+  );
+};
 
 app.get("/", (req, res) => {
-  const pgName = 'index';
-  res.render(pgName, getComments(pgName));
+  const pgName = "index";
+  getComments(pgName, (comments) => {
+    res.render(pgName, { comments, pgName });
+  });
 });
 
 app.get("/:fname", (req, res) => {
@@ -133,10 +145,19 @@ app.get("/:fname", (req, res) => {
   } else if (fname.endsWith(".jpg") || fname.endsWith(".png")) {
     res.sendFile(path.join(__dirname, `img/${fname}`));
   } else if (fname.indexOf(".") == -1) {
-    res.render(fname, getComments(fname));
+    getComments(fname, (comments) => {
+      res.render(fname, { comments, pgName : fname, loggedin : req.session.loggedin });
+    });
   } else {
     res.render("error404");
   }
+});
+
+app.post("/comment_:pgName", (req, res) => {
+  const pgName = req.params.pgName;
+  putComment(pgName, req.session.username, req.body.comment, cb => {
+    res.redirect(`/${pgName}`);
+  });
 });
 
 // site port
