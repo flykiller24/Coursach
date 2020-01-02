@@ -4,7 +4,7 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const path = require("path");
 const bcrypt = require("bcrypt");
-var exphbs  = require('express-handlebars');
+var hbs = require("express-handlebars");
 
 var connection = mysql.createConnection({
   host: process.env["INSTRUMENTS_DB_HOST"],
@@ -14,9 +14,8 @@ var connection = mysql.createConnection({
 });
 
 var app = express();
-app.engine('hbs', exphbs({defaultLayout: 'main', extname: '.hbs'}));
-app.set('view engine', 'hbs');
-
+app.engine("hbs", hbs({ defaultLayout: "main", extname: ".hbs" }));
+app.set("view engine", "hbs");
 app.use(
   session({
     secret: process.env["INSTRUMENTS_EXPRESS_SECRET"],
@@ -27,21 +26,19 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.get("/login", function(request, response) {
-  if (request.session.loggedin) response.redirect("/home");
-
-  response.sendFile(path.join(__dirname, "templates/login.html"));
+app.get("/login", function(req, res) {
+  if (req.session.loggedin) res.redirect("/home");
+  else res.render("login", { layout: "main", title: "Login" });
 });
 
-app.get("/register", function(request, response) {
-  if (request.session.loggedin) response.redirect("/home");
-
-  response.sendFile(path.join(__dirname, "templates/register.html"));
+app.get("/register", function(req, res) {
+  if (req.session.loggedin) res.redirect("/home");
+  else res.render("register", { layout: "main", title: "Register" });
 });
 
-app.post("/auth", function(request, response) {
-  var username = request.body.username;
-  var password = request.body.password;
+app.post("/auth", function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
   if (username && password) {
     connection.query(
       `SELECT * FROM accounts WHERE username="${username}"`,
@@ -49,29 +46,32 @@ app.post("/auth", function(request, response) {
         if (err) throw err;
         console.log(result);
 
-        if (result.length == 1 && bcrypt.compareSync(password, result[0].password)) {
-            request.session.loggedin = true;
-            request.session.username = username;
-            response.redirect("/home");
+        if (
+          result.length == 1 &&
+          bcrypt.compareSync(password, result[0].password)
+        ) {
+          req.session.loggedin = true;
+          req.session.username = username;
+          res.redirect("/home");
         } else if (result.length > 1) {
-          response.send("Internal error");
+          res.render("error505", { layout: "main" });
         } else {
-          response.send("Incorrect Username and/or Password!");
+          res.render("empty", { msg: "Invalid passwod/username" });
         }
 
-        response.end();
+        res.end();
       }
     );
   } else {
-    response.send("Please enter Username and Password!");
-    response.end();
+    res.render("empty", { msg: "Please enter username and password" });
+    res.end();
   }
 });
 
-app.post("/reg", function(request, response) {
-  var username = request.body.username;
-  if (username && request.body.password) {
-    var password = bcrypt.hashSync(request.body.password, 10);
+app.post("/reg", function(req, res) {
+  var username = req.body.username;
+  if (username && req.body.password) {
+    var password = bcrypt.hashSync(req.body.password, 10);
 
     connection.query(
       `INSERT INTO accounts (\`username\`, \`password\`) VALUES ("${username}", "${password}");`,
@@ -80,47 +80,62 @@ app.post("/reg", function(request, response) {
         console.log(`inserted user: ${username}`);
       }
     );
-    request.session.loggedin = true;
-    request.session.username = username;
-    response.redirect("/home");
+    req.session.loggedin = true;
+    req.session.username = username;
+    res.redirect("/home");
   } else {
-    response.send("Please enter Username and Password!");
-    response.end();
+    res.render("empty", { msg: "Please enter Username and Password!" });
+    res.end();
   }
 });
 
-app.get("/home", function(request, response) {
+app.get("/home", function(req, res) {
   var txt;
-  if (request.session.loggedin) txt = `Welcome back, ${request.session.username}! Logout <a href='/logout'>here</a>`;
-  else txt = "Please <a href='/login'>login</a> or <a href='/register'>register</a> to view this page!";
+  if (req.session.loggedin)
+    txt = `Welcome back, ${req.session.username}! Logout <a href='/logout'>here</a>`;
+  else
+    txt =
+      "Please <a href='/login'>login</a> or <a href='/register'>register</a> to view this page!";
 
-  response.render('main', { msg : txt });
+  res.render("empty", { msg: txt });
 });
 
-app.get("/logout", function(request, response) {
-  if (request.session.loggedin) {
-    request.session.destroy(err => {
+app.get("/logout", function(req, res) {
+  if (req.session.loggedin) {
+    req.session.destroy(err => {
       if (err) throw err;
     });
   }
-  response.redirect("/");
-  response.end();
+  res.redirect("/");
+  res.end();
 });
 
+
+
+const getComments = (page) => {
+
+  return {};
+}
+
+const putComment = (page, username, txt) => {
+
+}
+
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, `templates/index.html`));
+  const pgName = 'index';
+  res.render(pgName, getComments(pgName));
 });
 
 app.get("/:fname", (req, res) => {
   var fname = req.params.fname;
   if (fname == "style.css") {
-    res.sendFile(path.join(__dirname, "templates/style.css"));
+    res.sendFile(path.join(__dirname, "static/style.css"));
   } else if (fname.endsWith(".jpg") || fname.endsWith(".png")) {
     res.sendFile(path.join(__dirname, `img/${fname}`));
   } else if (fname.indexOf(".") == -1) {
-    res.sendFile(path.join(__dirname, `templates/${fname}.html`));
+    res.render(fname, getComments(fname));
   } else {
-    res.send("Error, no such file");
+    res.render("error404");
   }
 });
 
